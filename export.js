@@ -4,8 +4,14 @@ const { join } = require('path');
 // Copy the generated service worker into the export folder.
 function exportSw(nextConfig) {
   return async function exportPathMap(...args) {
-    const [defaultPathMap, { dev, distDir, outDir }] = args;
+    const [defaultPathMap, params] = args;
     const swDest = (nextConfig.workboxOpts && nextConfig.workboxOpts.swDest) || 'service-worker.js';
+
+    if (!params) {
+      return defaultPathMap;
+    }
+
+    const { dev, distDir, outDir } = params;
 
     if (dev) {
       return defaultPathMap;
