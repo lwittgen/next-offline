@@ -21,7 +21,6 @@ async function generateNextManifest(options) {
   const swFilePath = resolve(options.outputPath, options.swDest);
 
   const originalManifest = await getOriginalManifest(manifestFilePath);
-console.log(manifestFilePath, originalManifest);
   const nextManifest = buildNextManifest(originalManifest, options.buildId, options.urlPrefix);
   await inlineManifest(nextManifest, swFilePath);
 }
@@ -61,7 +60,7 @@ async function inlineManifest(manifest, swFilePath) {
     manifest,
     null,
     2,
-  )};\n\n${originalSw.replace(manifestImportRegex, '')}`;
+  )};\n\nself.__precacheManifest = [].concat(self.__precacheManifest || []);\nworkbox.precaching.suppressWarnings();\nworkbox.precaching.precacheAndRoute(self.__precacheManifest, {});\n\n${originalSw.replace(manifestImportRegex, '')}`;
 
   await writeFile(swFilePath, newSw, 'utf8');
 }
