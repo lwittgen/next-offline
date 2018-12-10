@@ -60,7 +60,7 @@ async function inlineManifest(manifest, swFilePath) {
     manifest,
     null,
     2,
-  )};\n\nself.__precacheManifest = [].concat(self.__precacheManifest || []);\nworkbox.precaching.suppressWarnings();\nworkbox.precaching.precacheAndRoute(self.__precacheManifest, {});\n\n${originalSw.replace(manifestImportRegex, '')}`;
+  )};\n\n${originalSw.replace(manifestImportRegex, '')}\n\nself.__precacheManifest = [].concat(self.__precacheManifest || []);\nworkbox.precaching.suppressWarnings();\nworkbox.precaching.precacheAndRoute(self.__precacheManifest, {});`;
 
   await writeFile(swFilePath, newSw, 'utf8');
 }
