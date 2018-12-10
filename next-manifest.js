@@ -45,7 +45,7 @@ function getOriginalManifest(manifestFilePath) {
 
 function buildNextManifest(originalManifest, buildId, urlPrefix = '') {
   return originalManifest.filter(entry => !excludeFiles.includes(entry.url)).map(entry => {
-    const url = entry.url.replace(/^bundles\//, `${buildId}/`);
+    const url = entry.url.replace(/^bundles\/pages\//, `${buildId}/page/`);
     return ({
       url: `${urlPrefix}${nextUrlPrefix}${url}`,
     });
