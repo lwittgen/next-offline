@@ -21,7 +21,8 @@ async function generateNextManifest(options) {
   const swFilePath = resolve(options.outputPath, options.swDest);
 
   const originalManifest = await getOriginalManifest(manifestFilePath);
-  const nextManifest = buildNextManifest(originalManifest, options.urlPrefix);
+console.log(manifestFilePath, originalManifest);
+  const nextManifest = buildNextManifest(originalManifest, options.buildId, options.urlPrefix);
   await inlineManifest(nextManifest, swFilePath);
 }
 
@@ -43,10 +44,13 @@ function getOriginalManifest(manifestFilePath) {
   });
 }
 
-function buildNextManifest(originalManifest, urlPrefix = '') {
-  return originalManifest.filter(entry => !excludeFiles.includes(entry.url)).map(entry => ({
-    url: `${urlPrefix}${nextUrlPrefix}${entry.url}`,
-  }));
+function buildNextManifest(originalManifest, buildId, urlPrefix = '') {
+  return originalManifest.filter(entry => !excludeFiles.includes(entry.url)).map(entry => {
+    const url = entry.url.replace(/^bundles\//, `${buildId}/`);
+    return ({
+      url: `${urlPrefix}${nextUrlPrefix}${url}`,
+    });
+  });
 }
 
 async function inlineManifest(manifest, swFilePath) {

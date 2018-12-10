@@ -44,6 +44,7 @@ module.exports = (nextConfig = {}) => ({
           outputPath: config.output.path,
           urlPrefix: assetPrefix,
           swDest: workboxOpts.swDest || 'service-worker.js',
+          buildId: options.buildId,
         }),
       );
     }
