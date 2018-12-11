@@ -45,7 +45,9 @@ function getOriginalManifest(manifestFilePath) {
 
 function buildNextManifest(originalManifest, buildId, urlPrefix = '') {
   return originalManifest.filter(entry => !excludeFiles.includes(entry.url)).map(entry => {
-    if (entry.url.startsWith('static/')) {
+    if (entry.url.startsWith('static/commons')) {
+      return ({ url: `${urlPrefix}${nextUrlPrefix}${entry.url}` });
+    } else if (entry.url.startsWith('static/')) {
       return `/${entry.url}`;
     }
     const url = entry.url.replace(/^bundles\/pages\//, `${buildId}/page/`);
