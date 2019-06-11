@@ -1,15 +1,15 @@
 function unregister() {
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.ready.then(registration => {
+    navigator.serviceWorker.ready.then(function(registration) {
       registration.unregister();
     });
   }
 }
 
-function register(swPath = '/service-worker.js') {
+function register(swPath) {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker
-      .register(swPath)
+      .register(swPath || '/service-worker.js')
       .then(function(registration) {
         console.log('SW registered: ', registration);
       })
@@ -20,6 +20,6 @@ function register(swPath = '/service-worker.js') {
 }
 
 module.exports = {
-  unregister,
-  register
+  unregister: unregister,
+  register: register
 }

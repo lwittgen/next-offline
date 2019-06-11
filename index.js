@@ -23,16 +23,31 @@ module.exports = (nextConfig = {}) => ({
       dontAutoRegisterSw = false,
       devSwSrc = join(__dirname, 'service-worker.js'),
       registerSwPrefix = '',
-      scope = '',
+      scope = '/',
+      generateInDevMode = false,
+      transformManifest = manifest => manifest,
       workboxOpts = {
         globPatterns: ['static/**/*'],
         globDirectory: '.',
-        runtimeCaching: [{ urlPattern: /^https?.*/, handler: 'networkFirst' }],
+        runtimeCaching: [
+          {
+            urlPattern: /^https?.*/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'offlineCache',
+              expiration: {
+                maxEntries: 200
+              }
+            }
+          }
+        ],
       },
     } = nextConfig;
 
+    const skipDuringDevelopment = options.dev && !generateInDevMode
+
     // Generate SW
-    if (options.dev) {
+    if (skipDuringDevelopment) {
       // Simply copy development service worker.
       config.plugins.push(new CopyWebpackPlugin([devSwSrc]));
     } else if (!options.isServer) {
@@ -45,25 +60,35 @@ module.exports = (nextConfig = {}) => ({
           urlPrefix: assetPrefix,
           swDest: workboxOpts.swDest || 'service-worker.js',
           buildId: options.buildId,
+          importsDirectory: workboxOpts.importsDirectory || '',
+          transformManifest
         }),
       );
     }
 
-    // Register SW
-    const originalEntry = config.entry;
-    config.entry = async () => {
-      const entries = await originalEntry();
-      if (entries['main.js'] && !dontAutoRegisterSw) {
-        let content = await readFile(require.resolve('./register-sw.js'), 'utf8');
-        content = content.replace('{REGISTER_SW_PREFIX}', registerSwPrefix);
-        content = content.replace('{SW_SCOPE}', scope);
+    if (!skipDuringDevelopment) {
+      // Register SW
+      const originalEntry = config.entry;
+      config.entry = async () => {
+        const entries = await originalEntry();
+        const swCompiledPath = join(__dirname, 'register-sw-compiled.js')
+        // See https://github.com/zeit/next.js/blob/canary/examples/with-polyfills/next.config.js for a reference on how to add new entrypoints
+        if (
+          entries['main.js'] &&
+          !entries['main.js'].includes(swCompiledPath) &&
+          !dontAutoRegisterSw
+        ) {
+          let content = await readFile(require.resolve('./register-sw.js'), 'utf8');
+          content = content.replace('{REGISTER_SW_PREFIX}', registerSwPrefix);
+          content = content.replace('{SW_SCOPE}', scope);
 
-        await writeFile(join(__dirname, 'register-sw-compiled.js'), content, 'utf8');
+          await writeFile(swCompiledPath, content, 'utf8');
 
-        entries['main.js'].unshift(require.resolve('./register-sw-compiled.js'));
-      }
-      return entries;
-    };
+          entries['main.js'].unshift(swCompiledPath);
+        }
+        return entries;
+      };
+    }
 
     if (typeof nextConfig.webpack === 'function') {
       return nextConfig.webpack(config, options);

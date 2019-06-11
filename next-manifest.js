@@ -17,12 +17,17 @@ const manifestImportRegex = /(,\s*(\r\n|\r|\n)\s*)?"precache-manifest\.[^.]*\.js
  * At the end replace old manifest reference with new inlined one.
  */
 async function generateNextManifest(options) {
-  const manifestFilePath = resolve(options.outputPath, manifestDest);
+  const manifestFilePath = resolve(options.outputPath, options.importsDirectory, manifestDest);
   const swFilePath = resolve(options.outputPath, options.swDest);
 
   const originalManifest = await getOriginalManifest(manifestFilePath);
   const nextManifest = buildNextManifest(originalManifest, options.buildId, options.urlPrefix);
-  await inlineManifest(nextManifest, swFilePath);
+  if (options.transformManifest) {
+    const transformedManifest = options.transformManifest(nextManifest);
+    await inlineManifest(transformedManifest, swFilePath);
+  } else {
+    await inlineManifest(nextManifest, swFilePath);
+  }
 }
 
 function getOriginalManifest(manifestFilePath) {

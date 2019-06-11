@@ -46,18 +46,19 @@ module.exports = withOffline(nextConfig)
 
 ## Documentation
 - [Serving service worker](#serving-service-worker)
-  - [Now 1.0](#now-1.0)
-  - [Now 2.0](#now-2.0)
+  - [Now 1.0](#now-10)
+  - [Now 2.0](#now-20)
 - [Registering service worker](#registering-service-worker)
   - [compile-time registration](#compile-time-registration)
   - [runtime registration](#runtime-registration)
 - [Customizing service worker](#customizing-service-worker)
-  - [workboxOpts](#using-workbox)
+  - [Using workbox](#using-workbox)
   - [next-offline options](#next-offline-options)
 - [Cache Strategies](#cache-strategies)
 - [Service worker path](#service-worker-path)
 - [next export](#next-export)
 - [Development mode](#development-mode)
+- [Next Offline 4.0](#next-offline-40)
 - [License](#license-(mit))
 
 ## Serving service worker
@@ -146,6 +147,8 @@ module.exports = withOffline({ dontAutoRegisterSw: true })
 
 ### Using workbox
 
+If you're new to workbox, I'd recommend reading this [quick guide](https://developers.google.com/web/tools/workbox/guides/generate-service-worker/webpack#adding_runtime_caching) -- anything inside of `worboxOpts` will be passed to `workbox-webpack-plugin`.
+
 Define a `workboxOpts` object in your `next.config.js` and it will gets passed to [workbox-webpack-plugin](https://developers.google.com/web/tools/workbox/modules/workbox-webpack-plugin#generatesw_plugin). Workbox is what `next-offline` uses under the hood to generate the service worker, you can learn more about it [here](https://developers.google.com/web/tools/workbox/).
 
 ```js
@@ -193,6 +196,12 @@ On top of the workbox options, next-offline has some options built in flags to g
       <td>false</td>
     </tr>
     <tr>
+      <td>generateInDevMode</td>
+      <td>Boolean</td>
+      <td>If true, the service worker will also be generated in development mode. Otherwise the service worker defined in devSwSrc will be used.</td>
+      <td>false</td>
+    </tr>
+    <tr>
       <td>registerSwPrefix</td>
       <td>String</td>
       <td>If your service worker isn't at the root level of your application, this can help you prefix the path. This is useful if you'd like your service worker on foobar.com/my/long/path/service-worker.js</td>
@@ -204,16 +213,33 @@ On top of the workbox options, next-offline has some options built in flags to g
       <td>This is passed to the automatically registered service worker allowing increase or decrease what the service worker has control of.</td>
       <td>"/"</td>
     </tr>
+    <tr>
+      <td>transformManifest</td>
+      <td>Function</td>
+      <td>This is passed the manifest, allowing you to customise the list of assets for the service worker to precache.</td>
+      <td>(manifest) => manifest</td>
+    </tr>
   </tbody>
 </table>
 
 ## Cache strategies
-By default `next-offline` has the following blanket runtime caching strategy. If you customize `next-offline` with `workboxOpts`, the default behaviour will not be passed into `workbox-webpack-plugin`
+By default `next-offline` has the following blanket runtime caching strategy. If you customize `next-offline` with `workboxOpts`, the default behaviour will not be passed into `workbox-webpack-plugin`. This [article](https://developers.google.com/web/tools/workbox/guides/generate-service-worker/webpack#adding_runtime_caching) is great at breaking down various different cache recipes.
 ```js
 {
   globPatterns: ['static/**/*'],
   globDirectory: '.',
-  runtimeCaching: { urlPattern: /^https?.*/, handler: 'networkFirst' }
+  runtimeCaching: [
+    {
+      urlPattern: /^https?.*/,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'offlineCache',
+        expiration: {
+          maxEntries: 200
+        }
+      }
+    }
+  ]
 }
 ```
 
@@ -227,11 +253,11 @@ module.exports = withOffline({
     runtimeCaching: [
       {
         urlPattern: /.png$/,
-        handler: 'cacheFirst'
+        handler: 'CacheFirst'
       },
       {
         urlPattern: /api/,
-        handler: 'networkFirst',
+        handler: 'NetworkFirst',
         options: {
           cacheableResponse: {
             statuses: [0, 200],
@@ -276,12 +302,17 @@ module.exports = withOffline({
 })
 ```
 
+You can disable this behavior by setting the `generateInDevMode` option to `true`.
+
 
 ## next export
 
 In next-offline@3.0.0 we've rewritten the export functionality to work in more cases, more reliably, with less code thanks to some of the additions in Next 7.0.0!
 
 You can read more about exporting at [Next.js docs]((https://github.com/zeit/next.js#static-html-export)) but next offline should Just Work™️.
+
+## next offline 4.0
+If you're upgrading to the latest version of `next-offline` I recommend glancing at what's been added/changed inside of [workbox in 4.x releases](https://github.com/GoogleChrome/workbox/releases) along with the 4.0 release which included the [breaking changes](https://github.com/GoogleChrome/workbox/releases/tag/v4.0.0). Next Offline's API hasn't changed, but a core depedency has!
 
 <hr />
 
